@@ -8,7 +8,6 @@ seeds_clean <- read_csv("data/cleaned/seeds_clean.csv")
 tourney <- read_csv("data/raw/MNCAATourneyDetailedResults.csv")
 
 # Average key stats per season across all teams
-windows()
 trends <- season_stats %>%
   group_by(Season) %>%
   summarise(
@@ -21,7 +20,7 @@ trends <- season_stats %>%
     AvgTO = mean(AvgTO),
     AvgFGA3 = mean(AvgFGA3)
   )
-# Plot each stat over time
+
 trends_long <- trends %>%
   pivot_longer(cols = -Season, names_to = "Stat", values_to = "Value")
 
@@ -30,18 +29,15 @@ ggplot(trends_long, aes(x = Season, y = Value)) +
   geom_smooth(method = "lm", se = FALSE, linetype = "dashed", color = "red") +
   facet_wrap(~ Stat, scales = "free_y") +
   labs(title = "NCAA Stat Trends Over Time (2003-2026)", x = "Season", y = "Value")
+ggsave("reports/StatTrends.png", width=12, height=8, dpi=150)
 
-
-#question 2 how teams perform better if going into the tournament with a streak
-#Team streakiness/momentum going into the tournament stat
-
-#How many of the previous 10 has a team won
+# Question 2 - Momentum
 momentum <- team_games %>%
   arrange(Season, TeamID, DayNum) %>%
   group_by(Season, TeamID) %>%
   slice_tail(n = 10) %>%
   summarise(Last10WinPct = mean(Win), .groups = "drop")
-#How far a team made it in the tournament
+
 tourney_runs <- bind_rows(
   tourney %>% transmute(Season, TeamID = WTeamID, TourneyWin = 1),
   tourney %>% transmute(Season, TeamID = LTeamID, TourneyWin = 0)
@@ -49,43 +45,41 @@ tourney_runs <- bind_rows(
   group_by(Season, TeamID) %>%
   summarise(TourneyWins = sum(TourneyWin), .groups = "drop")
 
-#Combine placing and momentum, also how a team that gets hot relative to their season record performs better
 streak_data <- momentum %>%
   inner_join(season_stats %>% select(Season, TeamID, WinPct), by = c("Season", "TeamID")) %>%
   inner_join(tourney_runs, by = c("Season", "TeamID")) %>%
   inner_join(seeds_clean %>% select(Season, TeamID, SeedNum), by = c("Season", "TeamID")) %>%
   mutate(
     MomentumDelta = Last10WinPct - WinPct,
-    ExpectedWins = (17 - SeedNum) / 16 * 6,  # rough expected wins based on seed
+    ExpectedWins = (17 - SeedNum) / 16 * 6,
     TourneyOverperformance = TourneyWins - ExpectedWins
   )
-head(streak_data)
-windows()
+
 ggplot(streak_data, aes(x = Last10WinPct, y = TourneyWins)) +
   geom_jitter(alpha = 0.3, height = 0.2) +
   geom_smooth(method = "lm", color = "red") +
   labs(title = "Late Season Momentum vs Tournament Wins",
        x = "Last 10 Games Win %",
        y = "Tournament Wins")
+ggsave("reports/MomentumRaw.png", width=8, height=6, dpi=150)
 
-windows()
 ggplot(streak_data, aes(x = MomentumDelta, y = TourneyOverperformance)) +
   geom_point(alpha = 0.3) +
   geom_smooth(method = "lm", color = "red") +
-  labs(title = "Momentum vs Tournament Overperformance",
+  labs(title = "Momentum vs Tournament Overperformance (Linear)",
        x = "Momentum Delta (Last 10 - Season Win%)",
        y = "Tournament Wins Above Expected")
-windows()
+ggsave("reports/MomentumLinear.png", width=8, height=6, dpi=150)
+
 ggplot(streak_data, aes(x = MomentumDelta, y = TourneyOverperformance)) +
   geom_point(alpha = 0.3) +
   geom_smooth(method = "loess", color = "red") +
-  labs(title = "Momentum vs Tournament Overperformance",
+  labs(title = "Momentum vs Tournament Overperformance (LOESS)",
        x = "Momentum Delta (Last 10 - Season Win%)",
        y = "Tournament Wins Above Expected")
+ggsave("reports/MomentumLoess.png", width=8, height=6, dpi=150)
 
-
-#Question 3
-#How does seed correlate with wins in the tournament, simple fit model
+# Question 3 - Seeds and upsets
 upset_data <- tourney %>%
   inner_join(seeds_clean %>% select(Season, TeamID, SeedNum), by = c("WTeamID" = "TeamID", "Season")) %>%
   rename(WSeed = SeedNum) %>%
@@ -93,10 +87,50 @@ upset_data <- tourney %>%
   rename(LSeed = SeedNum) %>%
   mutate(Upset = WSeed > LSeed)
 
-# Correlation of stats with Win %
-windows()
+upset_data %>%
+  group_by(LSeed) %>%
+  summarise(UpsetRate = mean(Upset), Games = n()) %>%
+  ggplot(aes(x = LSeed, y = UpsetRate)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
+  labs(title = "Upset Rate by Favored Seed",
+       x = "Favored Team Seed",
+       y = "% of Games Lost (Upset Rate)")
+ggsave("reports/UpsetRate.png", width=8, height=6, dpi=150)
+
+seeds_clean %>%
+  inner_join(tourney_runs, by = c("Season", "TeamID")) %>%
+  group_by(SeedNum) %>%
+  summarise(AvgTourneyWins = mean(TourneyWins)) %>%
+  ggplot(aes(x = SeedNum, y = AvgTourneyWins)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Average Tournament Wins by Seed",
+       x = "Seed",
+       y = "Average Tournament Wins")
+ggsave("reports/AvgWinsBySeed.png", width=8, height=6, dpi=150)
+
+# Top teams
+team_tourney_avg <- tourney_runs %>%
+  inner_join(teams %>% select(TeamID, TeamName), by = "TeamID") %>%
+  group_by(TeamName) %>%
+  summarise(
+    Appearances = n(),
+    AvgTourneyWins = mean(TourneyWins)
+  ) %>%
+  filter(Appearances >= 10) %>%
+  arrange(desc(AvgTourneyWins)) %>%
+  slice_head(n = 20)
+
+ggplot(team_tourney_avg, aes(x = reorder(TeamName, AvgTourneyWins), y = AvgTourneyWins)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 20 Teams by Average Tournament Wins (Min 10 Appearances)",
+       x = "Team", y = "Average Tournament Wins")
+ggsave("reports/TopTeams.png", width=10, height=6, dpi=150)
+
+# Stat correlation with Win%
 cor_data <- season_stats %>%
-  select(WinPct, AvgPointDiff, AvgFGPct, AvgFG3Pct, AvgFTPct, 
+  select(WinPct, AvgPointDiff, AvgFGPct, AvgFG3Pct, AvgFTPct,
          AvgReb, AvgAst, AvgTO, AvgStl, AvgBlk) %>%
   cor(use = "complete.obs")
 
@@ -112,46 +146,7 @@ ggplot(cor_winpct, aes(x = reorder(Stat, Correlation), y = Correlation, fill = C
   coord_flip() +
   labs(title = "Stat Correlation with Win %", x = "Stat", y = "Correlation") +
   scale_fill_manual(values = c("tomato", "steelblue"), guide = "none")
+ggsave("reports/StatCorrelation.png", width=8, height=6, dpi=150)
 
-windows()
-upset_data %>%
-  group_by(LSeed) %>%
-  summarise(UpsetRate = mean(Upset), Games = n()) %>%
-  ggplot(aes(x = LSeed, y = UpsetRate)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  geom_hline(yintercept = 0.5, linetype = "dashed", color = "red") +
-  labs(title = "Upset Rate by Favored Seed", 
-       x = "Favored Team Seed", 
-       y = "% of Games Lost (Upset Rate)")
-
-windows()
-seeds_clean %>%
-  inner_join(tourney_runs, by = c("Season", "TeamID")) %>%
-  group_by(SeedNum) %>%
-  summarise(AvgTourneyWins = mean(TourneyWins)) %>%
-  ggplot(aes(x = SeedNum, y = AvgTourneyWins)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  labs(title = "Average Tournament Wins by Seed",
-       x = "Seed",
-       y = "Average Tournament Wins")
-
-#Winnignest teams since 2003
-windows()
-team_tourney_avg <- tourney_runs %>%
-  inner_join(teams %>% select(TeamID, TeamName), by = "TeamID") %>%
-  group_by(TeamName) %>%
-  summarise(
-    Appearances = n(),
-    AvgTourneyWins = mean(TourneyWins)
-  ) %>%
-  filter(Appearances >= 10) %>%  # only teams with enough appearances to be meaningful
-  arrange(desc(AvgTourneyWins)) %>%
-  slice_head(n = 20)
-
-ggplot(team_tourney_avg, aes(x = reorder(TeamName, AvgTourneyWins), y = AvgTourneyWins)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  coord_flip() +
-  labs(title = "Top 20 Teams by Average Tournament Wins (Min 10 Appearances)",
-       x = "Team", y = "Average Tournament Wins")
-
+# Save streak data for Python modeling
 write_csv(streak_data, "data/cleaned/streak_data.csv")
