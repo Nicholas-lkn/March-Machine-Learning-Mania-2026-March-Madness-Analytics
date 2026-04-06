@@ -73,8 +73,44 @@ season_stats <- team_games %>%
   ) %>%
   left_join(teams %>% select(TeamID, TeamName), by = "TeamID")
 
-head(season_stats)
 
+head(season_stats)
+#Create Data Dictionary
+data_dict <- data.frame(
+  Field = c("TeamID", "Season", "WinPct", "AvgPointDiff", "AvgFGPct", 
+            "AvgFG3Pct", "AvgFTPct", "AvgReb", "AvgAst", "AvgTO", 
+            "AvgStl", "AvgBlk", "SeedNum", "Last10WinPct", "MomentumDelta"),
+  Type = c("int", "int", "float", "float", "float", "float", "float",
+           "float", "float", "float", "float", "float", "int", "float", "float"),
+  Description = c(
+    "Unique team identifier",
+    "Academic year of the season",
+    "Wins divided by total games played",
+    "Average scoring margin per game",
+    "Average field goal percentage per game",
+    "Average three-point percentage per game",
+    "Average free throw percentage per game",
+    "Average total rebounds per game",
+    "Average assists per game",
+    "Average turnovers per game",
+    "Average steals per game",
+    "Average blocks per game",
+    "Tournament seed number (1-16)",
+    "Win percentage in last 10 regular season games",
+    "Last10WinPct minus season WinPct (momentum relative to season average)"
+  ),
+  Source = c(
+    "MTeams.csv", "Raw data", "Derived: Wins/Games", 
+    "Derived: Score - OppScore", "Derived: FGM/FGA",
+    "Derived: FGM3/FGA3", "Derived: FTM/FTA",
+    "Derived: OR + DR", "Raw", "Raw", "Raw", "Raw",
+    "Derived from MNCAATourneySeeds.csv",
+    "Derived: mean(Win) last 10 games",
+    "Derived: Last10WinPct - WinPct"
+  )
+)
+
+write_csv(data_dict, "data/cleaned/data_dictionary.csv")
 write_csv(season_stats, "data/cleaned/season_stats.csv")
 write_csv(seeds_clean, "data/cleaned/seeds_clean.csv")
 write_csv(team_games, "data/cleaned/team_games.csv")

@@ -9,20 +9,22 @@ output: pdf_document
 March Madness is one of the most unpredictable sporting events in the world, where a single-elimination tournament of 68 teams produces upsets, Cinderella stories, and bracket-busting moments every year. Despite this unpredictability, patterns exist in the data — teams that shoot efficiently, protect the ball, and enter the tournament with momentum tend to outperform expectations.
 
 This project analyzes historical NCAA Division I men's basketball data from the Kaggle March Machine Learning Mania 2026 competition to explore three core analytics questions:
-### Question 1:
+**Question 1:**
   How have team performance metrics evolved over time, and which stats correlate most with winning?
   
-### Question 2:
-
-### Question 3:
+**Question 2:**
+ Does late-season momentum predict deeper tournament runs, and can hot teams outperform their seed expectation?
+    
+**Question 3:**
+  Can tournament game outcomes be accurately predicted using regular season statistics, and how do different models compare?
+  
+All document and code available on github: https://github.com/Nicholas-lkn/March-Machine-Learning-Mania-2026-March-Madness-Analytics
 
 # Data
-Description of the dataset, cleaning steps, and data dictionary.
+The dataset contains game-level results for NCAA Division I men's basketball from 1985 to 2026, sourced from the Kaggle March Machine Learning Mania 2026 competition. Detailed box score statistics are available from 2003 onward. Four files were used: regular season detailed results, tournament detailed results, tournament seeds, and team ID mappings.
 
-# EDA
-## Question 1: Stat Trends Over Time
-## Question 2: Momentum and Tournament Performance  
-## Question 3: Seed vs Tournament Outcomes
+Data was cleaned and processed in R. Raw and cleaned versions are kept separate. The cleaned data was loaded into a local SQLite database and mirrored in Google BigQuery for cloud storage.
+
 
 # Predictive Modeling
 Model results, comparison table, and feature importance.
