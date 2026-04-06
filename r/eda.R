@@ -2,6 +2,7 @@ library(tidyverse)
 
 #Datasets
 season_stats <- read_csv("data/cleaned/season_stats.csv")
+teams <- read_csv("data/raw/MTeams.csv")
 team_games <- read_csv("data/cleaned/team_games.csv")
 seeds_clean <- read_csv("data/cleaned/seeds_clean.csv")
 tourney <- read_csv("data/raw/MNCAATourneyDetailedResults.csv")
@@ -92,6 +93,26 @@ upset_data <- tourney %>%
   rename(LSeed = SeedNum) %>%
   mutate(Upset = WSeed > LSeed)
 
+# Correlation of stats with Win %
+windows()
+cor_data <- season_stats %>%
+  select(WinPct, AvgPointDiff, AvgFGPct, AvgFG3Pct, AvgFTPct, 
+         AvgReb, AvgAst, AvgTO, AvgStl, AvgBlk) %>%
+  cor(use = "complete.obs")
+
+cor_winpct <- data.frame(
+  Stat = rownames(cor_data),
+  Correlation = cor_data[, "WinPct"]
+) %>%
+  filter(Stat != "WinPct") %>%
+  arrange(desc(abs(Correlation)))
+
+ggplot(cor_winpct, aes(x = reorder(Stat, Correlation), y = Correlation, fill = Correlation > 0)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Stat Correlation with Win %", x = "Stat", y = "Correlation") +
+  scale_fill_manual(values = c("tomato", "steelblue"), guide = "none")
+
 windows()
 upset_data %>%
   group_by(LSeed) %>%
@@ -132,3 +153,5 @@ ggplot(team_tourney_avg, aes(x = reorder(TeamName, AvgTourneyWins), y = AvgTourn
   coord_flip() +
   labs(title = "Top 20 Teams by Average Tournament Wins (Min 10 Appearances)",
        x = "Team", y = "Average Tournament Wins")
+
+write_csv(streak_data, "data/cleaned/streak_data.csv")

@@ -1,0 +1,31 @@
+---
+title: 'March Madness Analytics: Team Performance Trends, Momentum, and Tournament
+  Predictions'
+author: "Nicholas Lookkin - 40126518"
+date: "2026-04-06"
+output: pdf_document
+---
+# Introduction
+March Madness is one of the most unpredictable sporting events in the world, where a single-elimination tournament of 68 teams produces upsets, Cinderella stories, and bracket-busting moments every year. Despite this unpredictability, patterns exist in the data — teams that shoot efficiently, protect the ball, and enter the tournament with momentum tend to outperform expectations.
+
+This project analyzes historical NCAA Division I men's basketball data from the Kaggle March Machine Learning Mania 2026 competition to explore three core analytics questions:
+### Question 1:
+  How have team performance metrics evolved over time, and which stats correlate most with winning?
+  
+### Question 2:
+
+### Question 3:
+
+# Data
+Description of the dataset, cleaning steps, and data dictionary.
+
+# EDA
+## Question 1: Stat Trends Over Time
+## Question 2: Momentum and Tournament Performance  
+## Question 3: Seed vs Tournament Outcomes
+
+# Predictive Modeling
+Model results, comparison table, and feature importance.
+
+# Conclusions
+Key findings, limitations, and next steps.
