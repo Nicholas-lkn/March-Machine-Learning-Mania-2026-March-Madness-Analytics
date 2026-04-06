@@ -19,7 +19,7 @@ Place all CSVs into `data/raw/`
 │   └── cleaned/      ← processed datasets and data dictionary as csv file
 ├── r/
 │   ├── explore.R
-│   ├── clean.R
+│   ├── cleaned.R
 │   ├── eda.R
 │   ├── sqlite.R
 │   └── report.Rmd
@@ -32,9 +32,9 @@ Place all CSVs into `data/raw/`
 
 ## How to Run
 1. Download dataset from Kaggle and place CSVs in `data/raw/`
-2. Run R scripts in order: `01_explore.R` → `02_clean.R` → `03_eda.R` → `04_sqlite.R`
-3. Run `notebooks/01_modeling.ipynb` for modeling
-4. Knit `r/04_report.Rmd` to generate PDF report
+2. Run R scripts in order: `explore.R` → `cleaned.R` → `eda.R` → `sqlite.R`
+3. Run `notebooks/modelling.ipynb` for modeling
+4. Knit `r/report.Rmd` to generate PDF report
 
 ## Requirements
 **R packages:** tidyverse, RSQLite, DBI
